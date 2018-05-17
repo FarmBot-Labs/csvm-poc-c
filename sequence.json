@@ -1,0 +1,210 @@
+{
+  "kind": "sequence",
+  "comment": null,
+  "body": [
+    {
+      "kind": "move_absolute",
+      "comment": null,
+      "body": [],
+      "args": {
+        "speed": 100,
+        "offset": {
+          "kind": "coordinate",
+          "comment": null,
+          "body": [],
+          "args": {
+            "z": 0,
+            "y": 0,
+            "x": 0
+          }
+        },
+        "location": {
+          "kind": "tool",
+          "comment": null,
+          "body": [],
+          "args": {
+            "tool_id": 372
+          }
+        }
+      }
+    },
+    {
+      "kind": "move_absolute",
+      "comment": null,
+      "body": [],
+      "args": {
+        "speed": 100,
+        "offset": {
+          "kind": "coordinate",
+          "comment": null,
+          "body": [],
+          "args": {
+            "z": 0,
+            "y": 0,
+            "x": 0
+          }
+        },
+        "location": {
+          "kind": "coordinate",
+          "comment": null,
+          "body": [],
+          "args": {
+            "z": 0,
+            "y": 0,
+            "x": 0
+          }
+        }
+      }
+    },
+    {
+      "kind": "move_relative",
+      "comment": null,
+      "body": [],
+      "args": {
+        "z": 0,
+        "y": 0,
+        "x": 0,
+        "speed": 100
+      }
+    },
+    {
+      "kind": "write_pin",
+      "comment": null,
+      "body": [],
+      "args": {
+        "pin_value": 0,
+        "pin_number": {
+          "kind": "named_pin",
+          "comment": null,
+          "body": [],
+          "args": {
+            "pin_type": "Peripheral",
+            "pin_id": 380
+          }
+        },
+        "pin_mode": 0
+      }
+    },
+    {
+      "kind": "write_pin",
+      "comment": null,
+      "body": [],
+      "args": {
+        "pin_value": 0,
+        "pin_number": 0,
+        "pin_mode": 0
+      }
+    },
+    {
+      "kind": "read_pin",
+      "comment": null,
+      "body": [],
+      "args": {
+        "pin_number": 0,
+        "pin_mode": 0,
+        "label": "---"
+      }
+    },
+    {
+      "kind": "read_pin",
+      "comment": null,
+      "body": [],
+      "args": {
+        "pin_number": {
+          "kind": "named_pin",
+          "comment": null,
+          "body": [],
+          "args": {
+            "pin_type": "Peripheral",
+            "pin_id": 380
+          }
+        },
+        "pin_mode": 0,
+        "label": "---"
+      }
+    },
+    {
+      "kind": "wait",
+      "comment": null,
+      "body": [],
+      "args": {
+        "milliseconds": 0
+      }
+    },
+    {
+      "kind": "send_message",
+      "comment": null,
+      "body": [],
+      "args": {
+        "message_type": "success",
+        "message": "FarmBot is at position {{ x }}, {{ y }}, {{ z }}."
+      }
+    },
+    {
+      "kind": "find_home",
+      "comment": null,
+      "body": [],
+      "args": {
+        "speed": 100,
+        "axis": "all"
+      }
+    },
+    {
+      "kind": "if",
+      "comment": null,
+      "body": [],
+      "args": {
+        "rhs": 0,
+        "op": "is",
+        "lhs": "x",
+        "_then": {
+          "kind": "execute",
+          "comment": null,
+          "body": [],
+          "args": {
+            "sequence_id": 1899
+          }
+        },
+        "_else": {
+          "kind": "execute",
+          "comment": null,
+          "body": [],
+          "args": {
+            "sequence_id": 1960
+          }
+        }
+      }
+    },
+    {
+      "kind": "execute",
+      "comment": null,
+      "body": [],
+      "args": {
+        "sequence_id": 1973
+      }
+    },
+    {
+      "kind": "execute_script",
+      "comment": null,
+      "body": [],
+      "args": {
+        "label": "Farmware tools import test"
+      }
+    },
+    {
+      "kind": "take_photo",
+      "comment": null,
+      "body": [],
+      "args": {}
+    }
+  ],
+  "args": {
+    "version": 20180209,
+    "locals": {
+      "kind": "scope_declaration",
+      "comment": null,
+      "body": [],
+      "args": {}
+    }
+  }
+}
