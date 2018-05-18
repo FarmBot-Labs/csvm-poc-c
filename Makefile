@@ -1,10 +1,11 @@
 ifeq ($(ERL_INCLUDE_DIR),)
 $(warning ERL_INCLUDE_DIR not set. Invoke via mix)
-endif
-
+else
 # Set Erlang-specific compile and linker flags
 ERL_CFLAGS ?= -I$(ERL_INCLUDE_DIR)
 ERL_LDFLAGS ?= -L$(ERL_LIBDIR)
+endif
+
 
 LDFLAGS ?=
 CFLAGS ?=
@@ -16,7 +17,7 @@ PORT := priv/csvm
 all: priv priv/csvm
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $(ERL_CFLAGS) -o $@ $<
+	$(CC) -g -c $(CFLAGS) $(ERL_CFLAGS) -o $@ $<
 
 priv/csvm: c_src/csvm.o c_src/cJSON.c
 	$(CC) $^ $(LDFLAGS) $(ERL_LDFLAGS) -o $@
