@@ -12,7 +12,8 @@ defmodule Csvm.MixProject do
       # package: package(),
       # description: description(),
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      aliases: [format: [&format_c/1, "format"]]
     ]
   end
 
@@ -45,4 +46,20 @@ defmodule Csvm.MixProject do
       {:ex_doc, "~> 0.18.1", only: [:dev, :test]}
     ]
   end
+
+  defp format_c([]) do
+    astyle =
+      System.find_executable("astyle") ||
+        Mix.raise("""
+        Could not format C code since astyle is not available.
+        """)
+
+    System.cmd(
+      astyle,
+      ["-n", "c_src/*.c", "c_src/*.h"],
+      into: IO.stream(:stdio, :line)
+    )
+  end
+
+  defp format_c(_args), do: true
 end

@@ -6,9 +6,14 @@ ERL_CFLAGS ?= -I$(ERL_INCLUDE_DIR)
 ERL_LDFLAGS ?= -L$(ERL_LIBDIR)
 endif
 
+CJSON_SRC=c_src/cJSON/cJSON.c
+
+SRC=$(wildcard c_src/*.c) $(CJSON_SRC)
+OBJ=$(SRC:.c=.o)
+
 
 LDFLAGS ?=
-CFLAGS ?=
+CFLAGS ?= -Wall
 
 PORT := priv/csvm
 
@@ -19,7 +24,7 @@ all: priv priv/csvm
 %.o: %.c
 	$(CC) -g -c $(CFLAGS) $(ERL_CFLAGS) -o $@ $<
 
-priv/csvm: c_src/csvm.o c_src/cJSON.c
+priv/csvm: $(OBJ)
 	$(CC) $^ $(LDFLAGS) $(ERL_LDFLAGS) -o $@
 
 priv:
