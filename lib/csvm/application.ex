@@ -8,7 +8,7 @@ defmodule Csvm.Application do
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
-      {Csvm, []}
+      # {Csvm, []}
       # Starts a worker by calling: Csvm.Worker.start_link(arg)
       # {Csvm.Worker, arg},
     ]
