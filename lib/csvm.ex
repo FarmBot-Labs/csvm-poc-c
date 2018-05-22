@@ -21,13 +21,13 @@ defmodule Csvm do
   end
 
   def handle_info({_port, {:data, data}}, state) do
-    IO.inspect(data, label: "DATA")
-    require IEx; IEx.pry
+    Csvm.RequestPacket.decode(data)
+    |> IO.inspect(label: "DATA")
     {:noreply, state}
   end
 
-  def handle_info({_, {:exit_status, status}}, state) do
-    Logger.warn "port exit: #{status}"
+  def handle_info({_, {:exit_status, status}}, _state) do
+    Logger.warn("port exit: #{status}")
     {:noreply, %{port: open_port()}}
   end
 
@@ -41,6 +41,7 @@ defmodule Csvm do
         :binary,
         :exit_status
       ])
+
     port
   end
 end

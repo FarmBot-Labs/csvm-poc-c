@@ -5,6 +5,15 @@
 
 #include "celery_ipc.h"
 
+int request_header_size() {
+    return
+        sizeof(uint16_t) // channel id
+        + NAMESPACE_SIZE // Namespce
+        + OPERATION_SIZE // Command/operation
+        + sizeof(uint16_t) // payload_size
+        + (sizeof(char) * 2); // newline chars.
+}
+
 char* ipc_request_encode(celery_ipc_request_t* request, size_t* size_ptr) {
     int size =
         sizeof(uint16_t) // Channel.
@@ -15,9 +24,7 @@ char* ipc_request_encode(celery_ipc_request_t* request, size_t* size_ptr) {
         + request->payload_size; // payload.
 
     char* ret = malloc(size);
-    if(size_ptr) {
-      *size_ptr = size;
-    }
+    *size_ptr = size;
 
     size_t channel_number_offset = 0;
     size_t namespace_offset = sizeof(uint16_t);
@@ -39,28 +46,28 @@ char* ipc_request_encode(celery_ipc_request_t* request, size_t* size_ptr) {
 }
 
 celery_ipc_request_t* decode_header(char* header) {
-  celery_ipc_request_t*  req = malloc(sizeof(celery_ipc_request_t));
+    celery_ipc_request_t*  req = malloc(sizeof(celery_ipc_request_t));
 
-  size_t channel_number_offset = 0;
-  size_t namespace_offset = sizeof(uint16_t);
-  size_t operation_offset = namespace_offset + (sizeof(char) * NAMESPACE_SIZE);
-  size_t payload_size_offset = operation_offset + (sizeof(char) * OPERATION_SIZE);
+    size_t channel_number_offset = 0;
+    size_t namespace_offset = sizeof(uint16_t);
+    size_t operation_offset = namespace_offset + (sizeof(char) * NAMESPACE_SIZE);
+    size_t payload_size_offset = operation_offset + (sizeof(char) * OPERATION_SIZE);
 
-  memcpy(&req->channel_number, &header[channel_number_offset], sizeof(int16_t));
-  req->channel_number = (int16_t)ntohs((uint16_t)req->channel_number);
+    memcpy(&req->channel_number, &header[channel_number_offset], sizeof(int16_t));
+    req->channel_number = (int16_t)ntohs((uint16_t)req->channel_number);
 
-  memcpy(req->namespace, &header[namespace_offset], NAMESPACE_SIZE);
-  req->namespace[NAMESPACE_SIZE + 1] = '\0';
+    memcpy(req->namespace, &header[namespace_offset], NAMESPACE_SIZE);
+    req->namespace[NAMESPACE_SIZE + 1] = '\0';
 
-  memcpy(req->operation, &header[operation_offset], OPERATION_SIZE);
-  req->operation[OPERATION_SIZE + 1] = '\0';
+    memcpy(req->operation, &header[operation_offset], OPERATION_SIZE);
+    req->operation[OPERATION_SIZE + 1] = '\0';
 
-  memcpy(&req->payload_size, &header[payload_size_offset], sizeof(int16_t));
-  req->payload_size = (int16_t)ntohs((uint16_t)req->payload_size);
+    memcpy(&req->payload_size, &header[payload_size_offset], sizeof(int16_t));
+    req->payload_size = (int16_t)ntohs((uint16_t)req->payload_size);
 
-  req->payload = malloc(req->payload_size);
+    req->payload = malloc(req->payload_size);
 
-  return req;
+    return req;
 }
 
 celery_ipc_response_t* ipc_response_decode(char* response) {
