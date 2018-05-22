@@ -21,6 +21,7 @@ defmodule Csvm.MixProject do
     case System.get_env("ERL_EI_INCLUDE_DIR") do
       nil ->
         %{
+          "DEBUG" => "1",
           "ERL_INCLUDE_DIR" => "#{:code.root_dir()}/usr/include",
           "ERL_LIBDIR" => "#{:code.root_dir()}/usr/lib"
         }

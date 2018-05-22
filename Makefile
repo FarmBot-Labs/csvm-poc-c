@@ -12,8 +12,12 @@ SRC=$(wildcard c_src/*.c) $(CJSON_SRC)
 OBJ=$(SRC:.c=.o)
 
 
-LDFLAGS ?=
-CFLAGS ?= -Wall
+LDFLAGS ?= -pthread
+CFLAGS ?= -Wall -std=c17
+
+ifdef DEBUG
+	CFLAGS += -g -DDEBUG
+endif
 
 PORT := priv/csvm
 
@@ -22,9 +26,9 @@ PORT := priv/csvm
 all: priv priv/csvm
 
 %.o: %.c
-	$(CC) -g -c $(CFLAGS) $(ERL_CFLAGS) -o $@ $<
+	$(CC) -c $(CFLAGS) $(ERL_CFLAGS) -o $@ $<
 
-priv/csvm: $(OBJ)
+$(PORT): $(OBJ)
 	$(CC) $^ $(LDFLAGS) $(ERL_LDFLAGS) -o $@
 
 priv:

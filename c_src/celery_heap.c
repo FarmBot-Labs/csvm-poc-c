@@ -3,13 +3,14 @@
 #include <string.h>
 
 #include "celery_heap.h"
+#include "util.h"
 
 celery_heap_t* heap_init() {
     celery_heap_t* heap = malloc(sizeof(celery_heap_t));
     heap->heap_size = 1;
     celery_heap_entry_t** heap_entries = malloc(sizeof(celery_heap_entry_t) * 1);
     if(!heap_entries) {
-        fprintf(stderr, "FAILED TO MALLOC ENTRIES\r\n");
+        debug_print("FAILED TO MALLOC ENTRIES\r\n");
     }
     heap_entries[0] = malloc(sizeof(celery_heap_entry_t));
     heap_entries[0]->number_entries = 0;
@@ -26,11 +27,11 @@ celery_heap_t* heap_init() {
 }
 
 void heap_alot(celery_heap_t* heap, char* kind) {
-    fprintf(stderr, "Current heap size: %d\r\n", heap->heap_size);
+    debug_print("Current heap size: %d\r\n", heap->heap_size);
     // add a new entry on the heap.
     celery_heap_entry_t** new_entries = realloc(heap->entries, (heap->heap_size + 1) * sizeof(celery_heap_entry_t));
     if(!new_entries) {
-        fprintf(stderr, "FAILED TO REALOC %d\r\n", heap->heap_size);
+        debug_print("FAILED TO REALOC %d\r\n", heap->heap_size);
         exit(1);
     }
     new_entries[heap->heap_size] = malloc(sizeof(celery_heap_entry_t));
@@ -44,7 +45,7 @@ void heap_alot(celery_heap_t* heap, char* kind) {
 void heap_put(celery_heap_t* heap, int adr, celery_heap_entry_type_t type, char* key, void* value) {
     celery_heap_entry_t* entry = heap->entries[adr];
     if(!entry) {
-        fprintf(stderr, "NO ENTRY AT ADDRESS %d\r\n", adr);
+        debug_print("NO ENTRY AT ADDRESS %d\r\n", adr);
         exit(1);
     }
 
@@ -54,12 +55,12 @@ void heap_put(celery_heap_t* heap, int adr, celery_heap_entry_type_t type, char*
     }
 
     if(found) {
-        printf("updating key %s\r\n", key);
+        debug_print("updating key %s\r\n", key);
         entry->kvs[i-1]->key = key;
         entry->kvs[i-1]->type = type;
         entry->kvs[i-1]->value = value;
     } else if(entry->number_entries == 0) {
-        printf("adding first key %s\r\n", key);
+        debug_print("adding first key %s\r\n", key);
         entry->kvs = malloc(1 * sizeof(celery_heap_entry_kv_t));
         entry->kvs[0] = malloc(sizeof(celery_heap_entry_kv_t));
         entry->kvs[0]->key = key;
@@ -67,11 +68,11 @@ void heap_put(celery_heap_t* heap, int adr, celery_heap_entry_type_t type, char*
         entry->kvs[0]->value = value;
         entry->number_entries = 1;
     } else {
-        printf("adding key %s (currently %d entries)\r\n", key, entry->number_entries);
+        debug_print("adding key %s (currently %d entries)\r\n", key, entry->number_entries);
 
         celery_heap_entry_kv_t** new_kvs = realloc(entry->kvs, (entry->number_entries + 1) * sizeof(celery_heap_entry_kv_t));
         if(!new_kvs) {
-            fprintf(stderr, "Failed to realloc new kv entries\r\n");
+            debug_print("Failed to realloc new kv entries\r\n");
             exit(1);
         }
 
@@ -89,7 +90,7 @@ void heap_put(celery_heap_t* heap, int adr, celery_heap_entry_type_t type, char*
 void inspect_heap(celery_heap_t* heap) {
     for(int i = 0; i<heap->heap_size; i++) {
         celery_heap_entry_t* entry = heap->entries[i];
-        printf("ENTRY[%d] with %d number of entries.\r\n", i, entry->number_entries);
+        debug_print("ENTRY[%d] with %d number of entries.\r\n", i, entry->number_entries);
         for(int j = 0; j<entry->number_entries; j++) {
             celery_heap_entry_kv_t* kv = entry->kvs[j];
             char* key = kv->key;
@@ -97,20 +98,20 @@ void inspect_heap(celery_heap_t* heap) {
 
             switch(kv->type) {
             case CSH_STRING:
-                fprintf(stderr, "\t'%s' => '%s'\r\n", key, (char*)value);
+                debug_print("\t'%s' => '%s'\r\n", key, (char*)value);
                 break;
             case CSH_BOOL:
             case CSH_NUMBER:
             case CSH_ADDRESS: {
                 int actual_value = *(int*)value;
-                fprintf(stderr, "\t'%s' => %d\r\n", key, actual_value);
+                debug_print("\t'%s' => %d\r\n", key, actual_value);
                 break;
             }
             default:
-                fprintf(stderr, "\t'%s' => %p (unknown type)\r\n", key, value);
+                debug_print("\t'%s' => %p (unknown type)\r\n", key, value);
                 break;
             }
         }
-        fprintf(stderr, "\r\n");
+        debug_print("\r\n");
     }
 }

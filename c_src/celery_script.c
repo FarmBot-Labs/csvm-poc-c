@@ -4,10 +4,16 @@
 
 #include "celery_script.h"
 
-celery_script_t* json_to_celery_script(char* data) {
+celery_script_t* buffer_to_celery_script(char* buffer) {
+  cJSON* json = cJSON_Parse(buffer);
+  celery_script_t* cs = json_to_celery_script(json);
+  cJSON_free(json);
+  return cs;
+}
+
+celery_script_t* json_to_celery_script(cJSON* celery_script_json) {
     celery_script_t* root;
     int i, body_size, args_size;
-    cJSON* celery_script_json = cJSON_Parse(data);
 
     cJSON* kind_string_json = cJSON_GetObjectItem(celery_script_json, "kind");
     cJSON* body_array_json = cJSON_GetObjectItem(celery_script_json, "body");
@@ -48,6 +54,5 @@ celery_script_t* json_to_celery_script(char* data) {
     root->args_size = args_size;
     root->body = body_array;
     root->args = args_array;
-    cJSON_free(celery_script_json);
     return root;
 }

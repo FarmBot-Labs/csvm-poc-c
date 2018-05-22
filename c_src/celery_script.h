@@ -24,6 +24,7 @@ typedef struct CeleryScript {
     struct CeleryArg** args;
 } celery_script_t;
 
-celery_script_t* json_to_celery_script(char* data);
+celery_script_t* buffer_to_celery_script(char* buffer);
+celery_script_t* json_to_celery_script(cJSON* celery_script_json);
 
 #endif
