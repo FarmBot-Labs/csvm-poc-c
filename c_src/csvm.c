@@ -13,10 +13,35 @@
 #include "celery_ipc.h"
 #include "util.h"
 
-// Testing
+/** DELETEME */
 #include <string.h>
 #include "celery_script.h"
 #include "celery_slicer.h"
+
+csvm_t* GlobalVM = NULL;
+
+csvm_t* csvm_init() {
+    csvm_t* csvm = malloc(sizeof(csvm_t));
+    for(int i = 0; i<NUMBER_REGISTERS; i++) {
+      csvm->registers[i] = 0;
+    }
+    csvm->registers[REGISTER_PC] = -1;
+    celery_heap_t* heap = heap_init();
+    csvm->heap = heap;
+    return csvm;
+}
+
+void csvm_tick(csvm_t* vm) {
+  debug_print("Tick start\r\n");
+  debug_print("Increment PC\r\n");
+  vm->registers[REGISTER_PC]+=1;
+  csvm_register_t pc = vm->registers[REGISTER_PC];
+  debug_print("Fetch heap entry at pc: %d\r\n", pc);
+  if(!(pc >= vm->heap->heap_size)) {
+    celery_heap_entry_t* entry = vm->heap->entries[pc];
+    debug_print("Executing: [%s]\r\n", entry->kind);
+  }
+}
 
 /* Initialize new terminal i/o settings */
 void init_termios() {
@@ -57,22 +82,19 @@ celery_ipc_request_t* get_request() {
 }
 
 celery_ipc_response_t* process_request(celery_ipc_request_t* request) {
-    debug_print("\r\n\r\nStart procesing.\r\n\r\n");
-
     celery_ipc_response_t* resp = malloc(sizeof(celery_ipc_response_t));
     resp->channel_number = request->channel_number;
     resp->return_code = 150;
     resp->return_value = 166;
-    //just for a test
-    if(strcmp(request->namespace, "CODE") == 0) {
-      debug_print("OK\r\n");
-      celery_script_t* cs = buffer_to_celery_script(request->payload);
-      celery_heap_t* heap = slice(cs);
-    } else {
-      debug_print("KO: %s\r\n", request->namespace);
+
+    if(strcmp(request->namespace, "TICK") == 0) {
+      csvm_tick(GlobalVM);
     }
 
-    debug_print("\r\n\r\nEnd procesing.\r\n\r\n");
+    if(strcmp(request->namespace, "LOAD") == 0) {
+      celery_script_t* celery = buffer_to_celery_script(request->payload);
+      GlobalVM->heap = slice(celery, GlobalVM->heap);
+    }
     return resp;
 }
 
@@ -106,6 +128,7 @@ int main(int argc, char const *argv[]) {
     // Handle sighangup when the port closes
     prctl(PR_SET_PDEATHSIG, SIGHUP);
     init_termios();
+    GlobalVM = csvm_init();
 
     pthread_t thread_id;
     pthread_create(&thread_id, NULL, fde, NULL);

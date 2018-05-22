@@ -5,8 +5,7 @@
 #include "celery_slicer.h"
 #include "celery_script.h"
 
-celery_heap_t* slice(celery_script_t* celery) {
-    celery_heap_t* heap = heap_init();
+celery_heap_t* slice(celery_script_t* celery, celery_heap_t* heap) {
     slicer_allocate(heap, celery, 0);
     return heap;
 }

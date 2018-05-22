@@ -18,6 +18,7 @@ celery_heap_t* heap_init() {
     heap->here = 0;
     heap->entries = heap_entries;
     int value = 0;
+    heap_set_kind(heap, 0, "nothing");
     heap_put(heap, 0, CSH_STRING,  HEAP_KIND, "nothing");
     heap_put(heap, 0, CSH_ADDRESS, HEAP_PARENT, &value);
     heap_put(heap, 0, CSH_ADDRESS, HEAP_BODY, &value);
@@ -39,6 +40,7 @@ void heap_alot(celery_heap_t* heap, char* kind) {
     heap->entries = new_entries;
     heap->heap_size = heap->heap_size + 1;
     heap->here = heap->here + 1;
+    heap_set_kind(heap, heap->here, kind);
     heap_put(heap, heap->here, CSH_STRING, HEAP_KIND, kind);
 }
 
@@ -85,6 +87,17 @@ void heap_put(celery_heap_t* heap, int adr, celery_heap_entry_type_t type, char*
         entry->number_entries = entry->number_entries + 1;
     }
 
+}
+
+void heap_set_kind(celery_heap_t* heap, int adr, char* kind) {
+  celery_heap_entry_t* entry = heap->entries[adr];
+  if(!entry) {
+      debug_print("NO ENTRY AT ADDRESS %d\r\n", adr);
+      exit(1);
+  }
+  int len = strlen(kind);
+  entry->kind = malloc(len);
+  memcpy(entry->kind, kind, len);
 }
 
 void inspect_heap(celery_heap_t* heap) {

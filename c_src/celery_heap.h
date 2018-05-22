@@ -24,6 +24,7 @@ typedef struct CeleryHeapEntryKV {
 typedef struct CeleryHeapEntry {
     int number_entries;
     celery_heap_entry_kv_t** kvs;
+    char* kind;
 } celery_heap_entry_t;
 
 typedef struct CeleryHeap {
@@ -35,5 +36,6 @@ typedef struct CeleryHeap {
 celery_heap_t* heap_init();
 void heap_alot(celery_heap_t* heap, char* kind);
 void heap_put(celery_heap_t* heap, int adr, celery_heap_entry_type_t type, char* key, void* value);
+void heap_set_kind(celery_heap_t* heap, int addr, char* kind);
 void inspect_heap(celery_heap_t* heap);
 #endif
