@@ -15,7 +15,9 @@ char* ipc_request_encode(celery_ipc_request_t* request, size_t* size_ptr) {
         + request->payload_size; // payload.
 
     char* ret = malloc(size);
-    *size_ptr = size;
+    if(size_ptr) {
+      *size_ptr = size;
+    }
 
     size_t channel_number_offset = 0;
     size_t namespace_offset = sizeof(uint16_t);
@@ -44,36 +46,35 @@ celery_ipc_request_t* decode_header(char* header) {
   size_t operation_offset = namespace_offset + (sizeof(char) * NAMESPACE_SIZE);
   size_t payload_size_offset = operation_offset + (sizeof(char) * OPERATION_SIZE);
 
-  unsigned int tmp;
-  tmp = (unsigned)header[channel_number_offset] << 8 | (unsigned)header[channel_number_offset + 1];
-  req->channel_number = tmp;
-  fprintf(stderr, "read: %u\n", tmp);
+  memcpy(&req->channel_number, &header[channel_number_offset], sizeof(int16_t));
+  req->channel_number = (int16_t)ntohs((uint16_t)req->channel_number);
 
-  // memcpy(req->namespace, &header[namespace_offset], NAMESPACE_SIZE);
-  // req->namespace[NAMESPACE_SIZE + 1] = '\0';
-  //
-  // memcpy(req->operation, &header[operation_offset], OPERATION_SIZE);
-  // req->operation[OPERATION_SIZE + 1] = '\0';
-  //
-  // tmp = (unsigned)header[payload_size_offset] << 8 | (unsigned)header[payload_size_offset + 1];
-  // req->payload_size = tmp;
-  //
-  // req->payload = malloc(req->payload_size);
+  memcpy(req->namespace, &header[namespace_offset], NAMESPACE_SIZE);
+  req->namespace[NAMESPACE_SIZE + 1] = '\0';
+
+  memcpy(req->operation, &header[operation_offset], OPERATION_SIZE);
+  req->operation[OPERATION_SIZE + 1] = '\0';
+
+  memcpy(&req->payload_size, &header[payload_size_offset], sizeof(int16_t));
+  req->payload_size = (int16_t)ntohs((uint16_t)req->payload_size);
+
+  req->payload = malloc(req->payload_size);
 
   return req;
 }
 
 celery_ipc_response_t* ipc_response_decode(char* response) {
     celery_ipc_response_t* resp = malloc(sizeof(celery_ipc_response_t));
-    unsigned int tmp;
-    tmp = (unsigned)response[0] << 8 | (unsigned)response[1];
-    resp->channel_number = tmp;
 
-    tmp = (unsigned)response[2] << 8 | (unsigned)response[3];
-    resp->return_code = tmp;
+    memcpy(&resp->channel_number, &response[0], sizeof(int16_t));
+    resp->channel_number = (int16_t)ntohs((uint16_t)resp->channel_number);
 
-    tmp = (unsigned)response[4] << 8 | (unsigned)response[5];
-    resp->return_value = tmp;
+    memcpy(&resp->return_code, &response[2], sizeof(int16_t));
+    resp->return_code = (int16_t)ntohs((uint16_t)resp->return_code);
+
+    memcpy(&resp->return_value, &response[4], sizeof(int16_t));
+    resp->return_value = (int16_t)ntohs((uint16_t)resp->return_value);
+
     return resp;
 }
 

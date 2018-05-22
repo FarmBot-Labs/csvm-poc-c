@@ -92,26 +92,25 @@ void inspect_heap(celery_heap_t* heap) {
         printf("ENTRY[%d] with %d number of entries.\r\n", i, entry->number_entries);
         for(int j = 0; j<entry->number_entries; j++) {
             celery_heap_entry_kv_t* kv = entry->kvs[j];
-            char* key = entry->kvs[j]->key;
-            void* value = entry->kvs[j]->value;
+            char* key = kv->key;
+            void* value = kv->value;
 
-            switch(entry->kvs[j]->type) {
+            switch(kv->type) {
             case CSH_STRING:
-                printf("\t'%s' => '%s'\r\n", key, value);
+                fprintf(stderr, "\t'%s' => '%s'\r\n", key, (char*)value);
                 break;
             case CSH_BOOL:
             case CSH_NUMBER:
             case CSH_ADDRESS: {
                 int actual_value = *(int*)value;
-                // actual_value = *((int*) value);
-                printf("\t'%s' => %d\r\n", key, actual_value);
+                fprintf(stderr, "\t'%s' => %d\r\n", key, actual_value);
                 break;
             }
             default:
-                printf("\t'%s' => %p (unknown type)\r\n", key, value);
+                fprintf(stderr, "\t'%s' => %p (unknown type)\r\n", key, value);
                 break;
             }
         }
-        printf("\r\n");
+        fprintf(stderr, "\r\n");
     }
 }
