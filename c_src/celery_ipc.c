@@ -83,38 +83,28 @@ char* ipc_response_encode(celery_ipc_response_t* response, size_t *size_ptr) {
         + sizeof(uint16_t) // return_value.
         + sizeof(char) * 2; // newline
 
-    char* ret = malloc(size);
+    char* buffer = malloc(size);
+    char* buf_start = buffer;
+    memset(buffer, 0, size);
     *size_ptr = size;
+    uint16_t result;
 
-    size_t channel_number_offset = sizeof(uint16_t) * 0;
-    size_t return_code_offset = sizeof(uint16_t) * 1;
-    size_t return_value_offset = sizeof(uint16_t) * 2;
+    result = htons(response->channel_number);
+    memcpy(buffer, &result, sizeof(result));
+    buffer+=sizeof(result);
 
-    int16_t tmp;
-    tmp = (int16_t)htons(response->channel_number);
+    result = htons(response->return_code);
+    memcpy(buffer, &result, sizeof(result));
+    buffer+=sizeof(result);
 
-    memcpy(&ret[channel_number_offset], &response->channel_number, sizeof(int16_t));
-    fprintf(stderr, "\r\n");
-    fprintf(stderr, "response: %u\r\n", response->channel_number);
-    fprintf(stderr, "tmp:      %u\r\n", tmp);
-    fprintf(stderr, "buffer:   %u\r\n", ret[channel_number_offset]);
-    fprintf(stderr, "\r\n");
+    result = htons(response->return_value);
+    memcpy(buffer, &result, sizeof(result));
+    buffer+=sizeof(result);
 
-    // memcpy(&resp->return_value, &response[4], sizeof(int16_t));
-    // resp->return_value = (int16_t)ntohs((uint16_t)resp->return_value);
+    buffer[0] = '\r';
+    buffer[1] = '\n';
 
-    // ret[channel_number_offset] = nth_byte(response->channel_number, 1);
-    // ret[channel_number_offset + 1] = nth_byte(response->channel_number, 0);
-
-    // ret[return_code_offset] = nth_byte(response->channel_number, 1);
-    // ret[return_code_offset + 1] = nth_byte(response->channel_number, 0);
-
-    // ret[return_value_offset] = nth_byte(response->channel_number,  1);
-    // ret[return_value_offset + 1] = nth_byte(response->channel_number, 0);
-
-    // ret[return_value_offset + sizeof(uint16_t)] = '\r';
-    // ret[return_value_offset + sizeof(uint16_t) + 1] = '\n';
-    return ret;
+    return buf_start;
 }
 
 int ipc_request_header_size() {

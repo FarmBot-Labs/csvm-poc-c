@@ -20,7 +20,7 @@ defmodule Csvm.ResponsePacket do
 
   def decode(
         <<request_id::integer-big-size(16), return_status_code::integer-big-size(16),
-          return_value::integer-big-size(16)>>
+          return_value::integer-big-size(16), "\r\n">>
       ) do
     struct(
       ResponsePacket,

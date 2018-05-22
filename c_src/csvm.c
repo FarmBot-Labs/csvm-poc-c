@@ -12,11 +12,8 @@
 #include "csvm.h"
 #include "celery_ipc.h"
 
-
-
 /* Initialize new terminal i/o settings */
-void init_termios()
-{
+void init_termios() {
     struct termios settings;
     tcgetattr(0, &settings); /* grab old terminal i/o settings */
     settings.c_lflag &= ~ICANON; /* disable buffered i/o */
@@ -27,10 +24,10 @@ void init_termios()
 celery_ipc_request_t* get_request() {
     char request_header_buffer[ipc_request_header_size()];
     size_t total_bytes_read = 0;
+    char read;
 
     while(total_bytes_read != ipc_request_header_size()) {
-        char read = getchar();
-        // fprintf(stderr, "0x%04X ", read);
+        read = getchar();
         request_header_buffer[total_bytes_read] = read;
         total_bytes_read += 1;
     }
@@ -42,15 +39,13 @@ celery_ipc_request_t* get_request() {
     fprintf(stderr, "\t\tnamespace: %s\r\n", request->namespace);
     fprintf(stderr, "\t\toperation: %s\r\n", request->operation);
     fprintf(stderr, "\t\tpayload_size: %u \r\n", (unsigned int)request->payload_size);
+    fprintf(stderr, "\r\tok\r\n\n");
     total_bytes_read = 0;
 
     while(total_bytes_read != request->payload_size) {
         request->payload[total_bytes_read] = getchar();
         total_bytes_read += 1;
-        fprintf(stderr, "\r\t\t num bytes: %ld out of %u: %s", total_bytes_read, (unsigned int)request->payload_size, request->payload);
     }
-
-    fprintf(stderr, "\r\tok\r\n\n");
 
     return request;
 }
@@ -58,19 +53,10 @@ celery_ipc_request_t* get_request() {
 celery_ipc_response_t* process_request(celery_ipc_request_t* request) {
     celery_ipc_response_t* resp = malloc(sizeof(celery_ipc_response_t));
     resp->channel_number = request->channel_number;
-    resp->return_code = -1;
-    resp->return_value = -1;
-    // char blah = 0;
-    //
-    // memcpy(&resp->channel_number, &request->channel_number, sizeof(int16_t));
-    // resp->channel_number = (int16_t)ntohs((uint16_t)resp->channel_number);
-    //
-    // memcpy(&resp->return_code, &blah, sizeof(int16_t));
-    // resp->return_code = (int16_t)ntohs((uint16_t)resp->return_code);
-    //
-    // memcpy(&resp->return_value, &blah, sizeof(int16_t));
-    // resp->return_value = (int16_t)ntohs((uint16_t)resp->return_value);
+    resp->return_code = 150;
+    resp->return_value = 166;
 
+    free(request->payload);
     free(request);
     return resp;
 }
@@ -78,22 +64,14 @@ celery_ipc_response_t* process_request(celery_ipc_request_t* request) {
 void write_response(celery_ipc_response_t* response) {
     size_t size;
     char* packet = ipc_response_encode(response, &size);
-
-    for(int i = 0; i<size+1; i++) {
-      fprintf(stderr, "0x%04X ", packet[i]);
-    }
-    fprintf(stderr, "\r\n");
-
     fwrite(packet, sizeof(char), size, stdout);
-    fflush(stderr);
+    fflush(stdout);
     free(packet);
-    free(response);
 }
 
 int main(int argc, char const *argv[]) {
     // Handle sighangup when the port closes
     prctl(PR_SET_PDEATHSIG, SIGHUP);
-    // Setup the terminal to not require newline chars on `getchar()`
     init_termios();
 
     celery_ipc_request_t* req;

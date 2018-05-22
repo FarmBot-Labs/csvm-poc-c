@@ -12,30 +12,26 @@ defmodule Csvm do
 
   def init(_) do
     port = open_port()
-    {:ok, %{port: port, context: :idle}}
+    {:ok, %{port: port, context: :idle, from: nil}}
   end
 
   def terminate(reason, _) do
-    Logger.warn("Crash: #{inspect reason}")
+    Logger.warn("Crash: #{inspect(reason)}")
   end
 
-  def handle_call({:command, packet}, _, state) do
+  def handle_call({:command, packet}, from, state) do
     Port.command(state.port, packet)
-    {:reply, :ok, %{state | context: :sent}}
+    {:noreply, %{state | context: :sent, from: from}}
   end
 
-  def handle_info({_port, {:data, data}}, %{context: :sent} = state) do
-    require IEx; IEx.pry
-    Csvm.ResponsePacket.decode(data)
-    |> IO.inspect(label: "RESPONSE")
-    {:noreply, %{state | context: :idle}}
+  def handle_info({_port, {:data, data}}, %{context: :sent, from: from} = state) do
+    resp = Csvm.ResponsePacket.decode(data)
+    GenServer.reply(from, resp)
+    {:noreply, %{state | context: :idle, from: nil}}
   end
 
   def handle_info({_port, {:data, data}}, state) do
-    Logger.warn "unhandled data: #{inspect data}"
-    # Csvm.RequestPacket.decode(data)
-    # |> IO.inspect(label: "DATA")
-
+    Logger.warn("unhandled data: #{inspect(data)}")
     {:noreply, state}
   end
 
@@ -46,15 +42,10 @@ defmodule Csvm do
 
   def open_port do
     executable = :code.priv_dir(:csvm) ++ '/csvm'
-
-    port =
-      Port.open({:spawn_executable, executable}, [
-        {:args, []},
-        # {:packet, 2},
-        :binary,
-        :exit_status
-      ])
-
-    port
+    Port.open({:spawn_executable, executable}, [
+      {:args, []},
+      :binary,
+      :exit_status
+    ])
   end
 end
