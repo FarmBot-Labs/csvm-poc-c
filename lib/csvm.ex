@@ -6,6 +6,17 @@ defmodule Csvm do
   end
 
   def init(_) do
+    port = open_port()
+
+    {:ok, %{port: port}}
+  end
+
+  def handle_info({:port, _port, data}, state) do
+    IO.inspect(data, label: "DATA")
+    {:noreply, state}
+  end
+
+  def open_port do
     executable = :code.priv_dir(:csvm) ++ '/csvm'
 
     port =
@@ -15,12 +26,6 @@ defmodule Csvm do
         :binary,
         :exit_status
       ])
-
-    {:ok, %{port: port}}
-  end
-
-  def handle_info({:port, _port, data}, state) do
-    IO.inspect(data, label: "DATA")
-    {:noreply, state}
+    port
   end
 end

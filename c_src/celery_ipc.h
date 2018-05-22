@@ -6,6 +6,8 @@
 #define NAMESPACE_SIZE 4
 #define OPERATION_SIZE 5
 
+int request_header_size();
+
 typedef struct CeleryIPCRequest {
     uint16_t channel_number;
     char namespace[NAMESPACE_SIZE + 1]; // Add char for null byte.
@@ -21,6 +23,7 @@ typedef struct CeleryIPCResponse {
 } celery_ipc_response_t;
 
 char* ipc_request_encode(celery_ipc_request_t* request, size_t* payload_size);
+celery_ipc_request_t* decode_header(char* header);
 celery_ipc_response_t* ipc_response_decode(char* response);
 
 char nth_byte(uint16_t number, size_t n);

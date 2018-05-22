@@ -36,6 +36,33 @@ char* ipc_request_encode(celery_ipc_request_t* request, size_t* size_ptr) {
     return ret;
 }
 
+celery_ipc_request_t* decode_header(char* header) {
+  celery_ipc_request_t*  req = malloc(sizeof(celery_ipc_request_t));
+
+  size_t channel_number_offset = 0;
+  size_t namespace_offset = sizeof(uint16_t);
+  size_t operation_offset = namespace_offset + (sizeof(char) * NAMESPACE_SIZE);
+  size_t payload_size_offset = operation_offset + (sizeof(char) * OPERATION_SIZE);
+
+  unsigned int tmp;
+  tmp = (unsigned)header[channel_number_offset] << 8 | (unsigned)header[channel_number_offset + 1];
+  req->channel_number = tmp;
+  fprintf(stderr, "read: %u\n", tmp);
+
+  // memcpy(req->namespace, &header[namespace_offset], NAMESPACE_SIZE);
+  // req->namespace[NAMESPACE_SIZE + 1] = '\0';
+  //
+  // memcpy(req->operation, &header[operation_offset], OPERATION_SIZE);
+  // req->operation[OPERATION_SIZE + 1] = '\0';
+  //
+  // tmp = (unsigned)header[payload_size_offset] << 8 | (unsigned)header[payload_size_offset + 1];
+  // req->payload_size = tmp;
+  //
+  // req->payload = malloc(req->payload_size);
+
+  return req;
+}
+
 celery_ipc_response_t* ipc_response_decode(char* response) {
     celery_ipc_response_t* resp = malloc(sizeof(celery_ipc_response_t));
     unsigned int tmp;
