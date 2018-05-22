@@ -5,15 +5,6 @@
 
 #include "celery_ipc.h"
 
-int request_header_size() {
-    return
-        sizeof(uint16_t) // channel id
-        + NAMESPACE_SIZE // Namespce
-        + OPERATION_SIZE // Command/operation
-        + sizeof(uint16_t) // payload_size
-        + (sizeof(char) * 2); // newline chars.
-}
-
 char* ipc_request_encode(celery_ipc_request_t* request, size_t* size_ptr) {
     int size =
         sizeof(uint16_t) // Channel.
@@ -45,7 +36,7 @@ char* ipc_request_encode(celery_ipc_request_t* request, size_t* size_ptr) {
     return ret;
 }
 
-celery_ipc_request_t* decode_header(char* header) {
+celery_ipc_request_t* ipc_request_decode_header(char* header) {
     celery_ipc_request_t*  req = malloc(sizeof(celery_ipc_request_t));
 
     size_t channel_number_offset = 0;
@@ -83,6 +74,56 @@ celery_ipc_response_t* ipc_response_decode(char* response) {
     resp->return_value = (int16_t)ntohs((uint16_t)resp->return_value);
 
     return resp;
+}
+
+char* ipc_response_encode(celery_ipc_response_t* response, size_t *size_ptr) {
+    int size =
+        sizeof(uint16_t) // Channel.
+        + sizeof(uint16_t) // return_code.
+        + sizeof(uint16_t) // return_value.
+        + sizeof(char) * 2; // newline
+
+    char* ret = malloc(size);
+    *size_ptr = size;
+
+    size_t channel_number_offset = sizeof(uint16_t) * 0;
+    size_t return_code_offset = sizeof(uint16_t) * 1;
+    size_t return_value_offset = sizeof(uint16_t) * 2;
+
+    int16_t tmp;
+    tmp = (int16_t)htons(response->channel_number);
+
+    memcpy(&ret[channel_number_offset], &response->channel_number, sizeof(int16_t));
+    fprintf(stderr, "\r\n");
+    fprintf(stderr, "response: %u\r\n", response->channel_number);
+    fprintf(stderr, "tmp:      %u\r\n", tmp);
+    fprintf(stderr, "buffer:   %u\r\n", ret[channel_number_offset]);
+    fprintf(stderr, "\r\n");
+
+    // memcpy(&resp->return_value, &response[4], sizeof(int16_t));
+    // resp->return_value = (int16_t)ntohs((uint16_t)resp->return_value);
+
+    // ret[channel_number_offset] = nth_byte(response->channel_number, 1);
+    // ret[channel_number_offset + 1] = nth_byte(response->channel_number, 0);
+
+    // ret[return_code_offset] = nth_byte(response->channel_number, 1);
+    // ret[return_code_offset + 1] = nth_byte(response->channel_number, 0);
+
+    // ret[return_value_offset] = nth_byte(response->channel_number,  1);
+    // ret[return_value_offset + 1] = nth_byte(response->channel_number, 0);
+
+    // ret[return_value_offset + sizeof(uint16_t)] = '\r';
+    // ret[return_value_offset + sizeof(uint16_t) + 1] = '\n';
+    return ret;
+}
+
+int ipc_request_header_size() {
+    return
+        sizeof(uint16_t) // channel id
+        + NAMESPACE_SIZE // Namespce
+        + OPERATION_SIZE // Command/operation
+        + sizeof(uint16_t) // payload_size
+        + (sizeof(char) * 2); // newline chars.
 }
 
 char nth_byte(uint16_t number, size_t n) {

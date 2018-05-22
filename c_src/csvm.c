@@ -1,3 +1,4 @@
+#include <termios.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,16 +6,16 @@
 #include <signal.h>
 #include <sys/prctl.h>
 #include <linux/prctl.h>
+#include <string.h>
+#include <arpa/inet.h> // ntohs
 
 #include "csvm.h"
 #include "celery_ipc.h"
 
-#include <termios.h>
-#include <stdio.h>
 
 
 /* Initialize new terminal i/o settings */
-void initTermios()
+void init_termios()
 {
     struct termios settings;
     tcgetattr(0, &settings); /* grab old terminal i/o settings */
@@ -24,45 +25,86 @@ void initTermios()
 }
 
 celery_ipc_request_t* get_request() {
-    char request_header_buffer[request_header_size()];
+    char request_header_buffer[ipc_request_header_size()];
     size_t total_bytes_read = 0;
 
-    while(total_bytes_read != request_header_size()) {
+    while(total_bytes_read != ipc_request_header_size()) {
         char read = getchar();
-        fprintf(stderr, "0x%04X ", read);
+        // fprintf(stderr, "0x%04X ", read);
         request_header_buffer[total_bytes_read] = read;
         total_bytes_read += 1;
     }
 
     fprintf(stderr, "\r\n");
-    celery_ipc_request_t* request = decode_header(&request_header_buffer[0]);
-    fprintf(stderr, "Got request packet. \r\n");
-    fprintf(stderr, "\tchannel_number: %u \r\n", (unsigned int)request->channel_number);
-    fprintf(stderr, "\tnamespace: %s\r\n", request->namespace);
-    fprintf(stderr, "\toperation: %s\r\n", request->operation);
-    fprintf(stderr, "\tpayload_size: %u \r\n", (unsigned int)request->payload_size);
-    fflush(stderr);
+    celery_ipc_request_t* request = ipc_request_decode_header(&request_header_buffer[0]);
+    fprintf(stderr, "\tGot request packet. \r\n");
+    fprintf(stderr, "\t\tchannel_number: %u \r\n", (unsigned int)request->channel_number);
+    fprintf(stderr, "\t\tnamespace: %s\r\n", request->namespace);
+    fprintf(stderr, "\t\toperation: %s\r\n", request->operation);
+    fprintf(stderr, "\t\tpayload_size: %u \r\n", (unsigned int)request->payload_size);
     total_bytes_read = 0;
 
     while(total_bytes_read != request->payload_size) {
         request->payload[total_bytes_read] = getchar();
         total_bytes_read += 1;
-        fprintf(stderr, "\r num bytes: %ld out of %u: %s", total_bytes_read, (unsigned int)request->payload_size, request->payload);
+        fprintf(stderr, "\r\t\t num bytes: %ld out of %u: %s", total_bytes_read, (unsigned int)request->payload_size, request->payload);
     }
 
-    fprintf(stderr, "\r\nok.\r\n");
+    fprintf(stderr, "\r\tok\r\n\n");
 
     return request;
 }
 
-int main(int argc, char const *argv[]) {
-    prctl(PR_SET_PDEATHSIG, SIGHUP);
-    initTermios();
-    fprintf(stderr, "waiting for packet.\r\n");
-    celery_ipc_request_t* req = get_request();
-    fprintf(stderr, "got request\r\n");
+celery_ipc_response_t* process_request(celery_ipc_request_t* request) {
+    celery_ipc_response_t* resp = malloc(sizeof(celery_ipc_response_t));
+    resp->channel_number = request->channel_number;
+    resp->return_code = -1;
+    resp->return_value = -1;
+    // char blah = 0;
+    //
+    // memcpy(&resp->channel_number, &request->channel_number, sizeof(int16_t));
+    // resp->channel_number = (int16_t)ntohs((uint16_t)resp->channel_number);
+    //
+    // memcpy(&resp->return_code, &blah, sizeof(int16_t));
+    // resp->return_code = (int16_t)ntohs((uint16_t)resp->return_code);
+    //
+    // memcpy(&resp->return_value, &blah, sizeof(int16_t));
+    // resp->return_value = (int16_t)ntohs((uint16_t)resp->return_value);
+
+    free(request);
+    return resp;
+}
+
+void write_response(celery_ipc_response_t* response) {
     size_t size;
-    char* packet = ipc_request_encode(req, &size);
+    char* packet = ipc_response_encode(response, &size);
+
+    for(int i = 0; i<size+1; i++) {
+      fprintf(stderr, "0x%04X ", packet[i]);
+    }
+    fprintf(stderr, "\r\n");
+
     fwrite(packet, sizeof(char), size, stdout);
+    fflush(stderr);
+    free(packet);
+    free(response);
+}
+
+int main(int argc, char const *argv[]) {
+    // Handle sighangup when the port closes
+    prctl(PR_SET_PDEATHSIG, SIGHUP);
+    // Setup the terminal to not require newline chars on `getchar()`
+    init_termios();
+
+    celery_ipc_request_t* req;
+    celery_ipc_response_t* resp;
+    for(;;) {
+        fprintf(stderr, "Waiting for new request \r\n");
+        req = get_request();
+        fprintf(stderr, "processing request. \r\n");
+        resp = process_request(req);
+        fprintf(stderr, "writing response\r\n");
+        write_response(resp);
+    }
     return 300;
 }

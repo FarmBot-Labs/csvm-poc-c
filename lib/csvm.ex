@@ -12,17 +12,30 @@ defmodule Csvm do
 
   def init(_) do
     port = open_port()
-    {:ok, %{port: port}}
+    {:ok, %{port: port, context: :idle}}
+  end
+
+  def terminate(reason, _) do
+    Logger.warn("Crash: #{inspect reason}")
   end
 
   def handle_call({:command, packet}, _, state) do
     Port.command(state.port, packet)
-    {:reply, :ok, state}
+    {:reply, :ok, %{state | context: :sent}}
+  end
+
+  def handle_info({_port, {:data, data}}, %{context: :sent} = state) do
+    require IEx; IEx.pry
+    Csvm.ResponsePacket.decode(data)
+    |> IO.inspect(label: "RESPONSE")
+    {:noreply, %{state | context: :idle}}
   end
 
   def handle_info({_port, {:data, data}}, state) do
-    Csvm.RequestPacket.decode(data)
-    |> IO.inspect(label: "DATA")
+    Logger.warn "unhandled data: #{inspect data}"
+    # Csvm.RequestPacket.decode(data)
+    # |> IO.inspect(label: "DATA")
+
     {:noreply, state}
   end
 
