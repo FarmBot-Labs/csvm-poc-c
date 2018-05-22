@@ -55,9 +55,6 @@ celery_ipc_response_t* process_request(celery_ipc_request_t* request) {
     resp->channel_number = request->channel_number;
     resp->return_code = 150;
     resp->return_value = 166;
-
-    free(request->payload);
-    free(request);
     return resp;
 }
 
@@ -79,10 +76,15 @@ int main(int argc, char const *argv[]) {
     for(;;) {
         fprintf(stderr, "Waiting for new request \r\n");
         req = get_request();
+
         fprintf(stderr, "processing request. \r\n");
         resp = process_request(req);
+        free(req->payload);
+        free(req);
+
         fprintf(stderr, "writing response\r\n");
         write_response(resp);
+        free(resp);
     }
     return 300;
 }
