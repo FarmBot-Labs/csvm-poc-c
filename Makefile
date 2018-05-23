@@ -16,11 +16,11 @@ LUA_DL_URL := "https://www.lua.org/ftp/$(LUA_DL)"
 LUA_SRC_DIR := $(PWD)/c_src/$(LUA_NAME)/src
 LUA_BUILD_DIR := $(BUILD_DIR)/$(LUA_NAME)
 
-LUA_INCLUDE_DIR := $(LUA_SRC_DIR)
+LUA_INCLUDE_DIR := $(LUA_BUILD_DIR)/include
 LUA_LIBDIR := $(LUA_BUILD_DIR)/lib
 
 LUA_CFLAGS := -I$(LUA_INCLUDE_DIR)
-LUA_LDFLAGS := -L$(LUA_LIBDIR)
+LUA_LDFLAGS := -L$(LUA_LIBDIR) -llua
 
 LUA_LIB := $(LUA_LIBDIR)/liblua.so
 
@@ -33,7 +33,7 @@ SRC=$(wildcard c_src/*.c) $(CJSON_SRC)
 OBJ=$(SRC:.c=.o)
 
 LDFLAGS ?=
-CFLAGS ?= -Wall -std=c17
+CFLAGS ?= -Wall -std=gnu99
 
 ifdef DEBUG
 	CFLAGS += -g -DDEBUG
@@ -43,7 +43,7 @@ PORT := priv/csvm
 
 .PHONY: all lua_clean lua_fullclean
 
-all: priv $(LUA_LIB) priv/csvm
+all: priv $(LUA_LIB) priv/csvm priv/nif_test.so
 
 $(LUA_SRC_DIR):
 	wget $(LUA_DL_URL)
@@ -56,7 +56,7 @@ $(LUA_BUILD_DIR):
 	mkdir -p $(LUA_BUILD_DIR)
 
 $(LUA_LIB): $(LUA_SRC_DIR) $(LUA_BUILD_DIR)
-	cd c_src/$(LUA_NAME) && make MYCFLAGS="-fPIC -DLUA_COMPAT_5_2 -DLUA_COMPAT_5_1" MYLDFLAGS="$(LDFLAGS)" linux
+	cd c_src/$(LUA_NAME) && make MYCFLAGS="$(CFLAGS) -fPIC -DLUA_COMPAT_5_2 -DLUA_COMPAT_5_1" MYLDFLAGS="$(LDFLAGS)" linux
 	cd c_src/$(LUA_NAME) && make -e TO_LIB="liblua.a liblua.so liblua.so.$(LUA_VERSION)" INSTALL_DATA='cp -d' INSTALL_TOP=$(LUA_BUILD_DIR) install
 
 %.o: %.c
@@ -64,6 +64,9 @@ $(LUA_LIB): $(LUA_SRC_DIR) $(LUA_BUILD_DIR)
 
 $(PORT): $(OBJ)
 	$(CC) $^ $(LDFLAGS) $(ERL_LDFLAGS) $(LUA_LDFLAGS) -o $@
+
+priv/nif_test.so: c_src/nif_test/nif_test.c
+	$(CC) -o $@ $< $(LUA_CFLAGS) $(ERL_CFLAGS) $(CFLAGS) $(NIF_CFLAGS) $(LDFLAGS) $(ERL_LDFLAGS) $(LUA_LDFLAGS) $(NIF_LDFLAGS)
 
 priv:
 	mkdir -p priv
