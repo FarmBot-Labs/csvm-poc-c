@@ -32,11 +32,8 @@ csvm_t* csvm_init() {
 }
 
 void csvm_tick(csvm_t* vm) {
-    debug_print("Tick start\r\n");
-    debug_print("Increment PC\r\n");
     vm->registers[REGISTER_PC]+=1;
     csvm_register_t pc = vm->registers[REGISTER_PC];
-    debug_print("Fetch heap entry at pc: %d\r\n", pc);
     if(!(pc >= vm->heap->heap_size)) {
         debug_print_q("\r\n\r\n");
         celery_heap_entry_t* entry = vm->heap->entries[pc];
@@ -111,14 +108,14 @@ celery_ipc_request_t* get_request() {
         total_bytes_read += 1;
     }
 
-    debug_print("\r\n");
+    // debug_print("\r\n");
     celery_ipc_request_t* request = ipc_request_decode_header(&request_header_buffer[0]);
-    debug_print("\tGot request packet. \r\n");
-    debug_print("\t\tchannel_number: %u \r\n", (unsigned int)request->channel_number);
-    debug_print("\t\tnamespace: %s\r\n", request->namespace);
-    debug_print("\t\toperation: %s\r\n", request->operation);
-    debug_print("\t\tpayload_size: %u \r\n", (unsigned int)request->payload_size);
-    debug_print("\r\tok\r\n\n");
+    // debug_print("\tGot request packet. \r\n");
+    // debug_print("\t\tchannel_number: %u \r\n", (unsigned int)request->channel_number);
+    // debug_print("\t\tnamespace: %s\r\n", request->namespace);
+    // debug_print("\t\toperation: %s\r\n", request->operation);
+    // debug_print("\t\tpayload_size: %u \r\n", (unsigned int)request->payload_size);
+    // debug_print("\r\tok\r\n\n");
     total_bytes_read = 0;
 
     while(total_bytes_read != request->payload_size) {
@@ -163,15 +160,10 @@ int main(int argc, char const *argv[]) {
     celery_ipc_request_t* req;
     celery_ipc_response_t* resp;
     for(;;) {
-        debug_print("Waiting for new request \r\n");
         req = get_request();
-
-        debug_print("processing request. \r\n");
         resp = process_request(req);
         free(req->payload);
         free(req);
-
-        debug_print("writing response\r\n");
         write_response(resp);
         free(resp);
     }
