@@ -44,7 +44,8 @@ defmodule Csvm.MixProject do
     [
       {:dialyxir, "~> 0.5.1", runtime: false},
       {:elixir_make, "~> 0.4.1"},
-      {:ex_doc, "~> 0.18.1", only: [:dev, :test]}
+      {:ex_doc, "~> 0.18.1", only: [:dev, :test]},
+      {:poison, "~> 3.1"}
     ]
   end
 

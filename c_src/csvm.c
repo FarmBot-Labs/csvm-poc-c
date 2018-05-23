@@ -17,13 +17,14 @@
 #include <string.h>
 #include "celery_script.h"
 #include "celery_slicer.h"
+#include "corpus.h"
 
 csvm_t* GlobalVM = NULL;
 
 csvm_t* csvm_init() {
     csvm_t* csvm = malloc(sizeof(csvm_t));
     for(int i = 0; i<NUMBER_REGISTERS; i++) {
-      csvm->registers[i] = 0;
+        csvm->registers[i] = 0;
     }
     csvm->registers[REGISTER_PC] = -1;
     celery_heap_t* heap = heap_init();
@@ -32,15 +33,15 @@ csvm_t* csvm_init() {
 }
 
 void csvm_tick(csvm_t* vm) {
-  debug_print("Tick start\r\n");
-  debug_print("Increment PC\r\n");
-  vm->registers[REGISTER_PC]+=1;
-  csvm_register_t pc = vm->registers[REGISTER_PC];
-  debug_print("Fetch heap entry at pc: %d\r\n", pc);
-  if(!(pc >= vm->heap->heap_size)) {
-    celery_heap_entry_t* entry = vm->heap->entries[pc];
-    debug_print("Executing: [%s]\r\n", entry->kind);
-  }
+    debug_print("Tick start\r\n");
+    debug_print("Increment PC\r\n");
+    vm->registers[REGISTER_PC]+=1;
+    csvm_register_t pc = vm->registers[REGISTER_PC];
+    debug_print("Fetch heap entry at pc: %d\r\n", pc);
+    if(!(pc >= vm->heap->heap_size)) {
+        celery_heap_entry_t* entry = vm->heap->entries[pc];
+        debug_print("Executing: [%s]\r\n", entry->kind);
+    }
 }
 
 /* Initialize new terminal i/o settings */
@@ -88,12 +89,12 @@ celery_ipc_response_t* process_request(celery_ipc_request_t* request) {
     resp->return_value = 166;
 
     if(strcmp(request->namespace, "TICK") == 0) {
-      csvm_tick(GlobalVM);
+        csvm_tick(GlobalVM);
     }
 
     if(strcmp(request->namespace, "LOAD") == 0) {
-      celery_script_t* celery = buffer_to_celery_script(request->payload);
-      GlobalVM->heap = slice(celery, GlobalVM->heap);
+        celery_script_t* celery = buffer_to_celery_script(request->payload);
+        GlobalVM->heap = slice(celery, GlobalVM->heap);
     }
     return resp;
 }
@@ -107,21 +108,21 @@ void write_response(celery_ipc_response_t* response) {
 }
 
 void *fde(void *arg) {
-  celery_ipc_request_t* req;
-  celery_ipc_response_t* resp;
-  for(;;) {
-      debug_print("Waiting for new request \r\n");
-      req = get_request();
+    celery_ipc_request_t* req;
+    celery_ipc_response_t* resp;
+    for(;;) {
+        debug_print("Waiting for new request \r\n");
+        req = get_request();
 
-      debug_print("processing request. \r\n");
-      resp = process_request(req);
-      free(req->payload);
-      free(req);
+        debug_print("processing request. \r\n");
+        resp = process_request(req);
+        free(req->payload);
+        free(req);
 
-      debug_print("writing response\r\n");
-      write_response(resp);
-      free(resp);
-  }
+        debug_print("writing response\r\n");
+        write_response(resp);
+        free(resp);
+    }
 }
 
 int main(int argc, char const *argv[]) {

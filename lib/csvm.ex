@@ -42,6 +42,7 @@ defmodule Csvm do
 
   def open_port do
     executable = :code.priv_dir(:csvm) ++ '/csvm'
+
     Port.open({:spawn_executable, executable}, [
       {:args, []},
       :binary,

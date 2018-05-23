@@ -1,7 +1,9 @@
 #ifndef CELERYSCRIPT_H
 #define CELERYSCRIPT_H
 
+#include <stdbool.h>
 #include "cJSON/cJSON.h"
+#include "corpus.h"
 
 typedef enum CeleryArgType {
     CS_STRING,
@@ -10,16 +12,23 @@ typedef enum CeleryArgType {
     CS_CELERYSCRIPT
 } celery_arg_type_t;
 
+typedef union CeleryArgValue {
+  char* str_value;
+  bool bool_value;
+  double number_value;
+  struct CeleryScript* celery_value;
+} celery_arg_value_t;
+
 typedef struct CeleryArg {
-    char* kind;
-    void* value;
+    celery_node_kind_name_t kind;
     celery_arg_type_t type;
+    celery_arg_value_t value;
 } celery_arg_t;
 
 typedef struct CeleryScript {
-    char* kind;
-    int body_size;
-    int args_size;
+    celery_node_kind_name_t kind;
+    size_t body_size;
+    size_t args_size;
     struct CeleryScript** body;
     struct CeleryArg** args;
 } celery_script_t;

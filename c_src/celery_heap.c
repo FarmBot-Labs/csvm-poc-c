@@ -3,12 +3,13 @@
 #include <string.h>
 
 #include "celery_heap.h"
+#include "corpus.h"
 #include "util.h"
 
 celery_heap_t* heap_init() {
     celery_heap_t* heap = malloc(sizeof(celery_heap_t));
     heap->heap_size = 1;
-    celery_heap_entry_t** heap_entries = malloc(sizeof(celery_heap_entry_t) * 1);
+    celery_heap_entry_t** heap_entries = malloc(sizeof(celery_heap_entry_t));
     if(!heap_entries) {
         debug_print("FAILED TO MALLOC ENTRIES\r\n");
     }
@@ -17,22 +18,22 @@ celery_heap_t* heap_init() {
 
     heap->here = 0;
     heap->entries = heap_entries;
-    int value = 0;
-    heap_set_kind(heap, 0, "nothing");
-    heap_put(heap, 0, CSH_STRING,  HEAP_KIND, "nothing");
-    heap_put(heap, 0, CSH_ADDRESS, HEAP_PARENT, &value);
-    heap_put(heap, 0, CSH_ADDRESS, HEAP_BODY, &value);
-    heap_put(heap, 0, CSH_ADDRESS, HEAP_NEXT, &value);
+    celery_heap_entry_value_t value;
+    value.number_value = 0;
+    heap_set_kind(heap, 0, NOTHING);
+    heap_put(heap, 0, CSH_ADDRESS, HEAP_PARENT, value);
+    heap_put(heap, 0, CSH_ADDRESS, HEAP_BODY, value);
+    heap_put(heap, 0, CSH_ADDRESS, HEAP_NEXT, value);
 
     return heap;
 }
 
-void heap_alot(celery_heap_t* heap, char* kind) {
-    debug_print("Current heap size: %d\r\n", heap->heap_size);
+void heap_alot(celery_heap_t* heap, heap_key_t kind) {
+    debug_print("Current heap size: %ld\r\n", heap->heap_size);
     // add a new entry on the heap.
     celery_heap_entry_t** new_entries = realloc(heap->entries, (heap->heap_size + 1) * sizeof(celery_heap_entry_t));
     if(!new_entries) {
-        debug_print("FAILED TO REALOC %d\r\n", heap->heap_size);
+        debug_print("FAILED TO REALOC %ld\r\n", heap->heap_size);
         exit(1);
     }
     new_entries[heap->heap_size] = malloc(sizeof(celery_heap_entry_t));
@@ -41,19 +42,18 @@ void heap_alot(celery_heap_t* heap, char* kind) {
     heap->heap_size = heap->heap_size + 1;
     heap->here = heap->here + 1;
     heap_set_kind(heap, heap->here, kind);
-    heap_put(heap, heap->here, CSH_STRING, HEAP_KIND, kind);
 }
 
-void heap_put(celery_heap_t* heap, int adr, celery_heap_entry_type_t type, char* key, void* value) {
+void heap_put(celery_heap_t* heap, heap_addr_t adr, celery_heap_entry_type_t type, heap_key_t key, celery_heap_entry_value_t value) {
     celery_heap_entry_t* entry = heap->entries[adr];
     if(!entry) {
-        debug_print("NO ENTRY AT ADDRESS %d\r\n", adr);
+        debug_print("NO ENTRY AT ADDRESS %ld\r\n", adr);
         exit(1);
     }
 
     int i, found;
     for(i = 0, found = 0; (entry->number_entries > 0 && i<entry->number_entries) && (found == 0); i++) {
-        found = strcmp(entry->kvs[i]->key, key) == 0;
+        found = entry->kvs[i]->key == key;
     }
 
     if(found) {
@@ -62,7 +62,7 @@ void heap_put(celery_heap_t* heap, int adr, celery_heap_entry_type_t type, char*
         entry->kvs[i-1]->type = type;
         entry->kvs[i-1]->value = value;
     } else if(entry->number_entries == 0) {
-        debug_print("adding first key %s\r\n", key);
+        debug_print("adding first key %ls\r\n", key);
         entry->kvs = malloc(1 * sizeof(celery_heap_entry_kv_t));
         entry->kvs[0] = malloc(sizeof(celery_heap_entry_kv_t));
         entry->kvs[0]->key = key;
@@ -78,7 +78,6 @@ void heap_put(celery_heap_t* heap, int adr, celery_heap_entry_type_t type, char*
             exit(1);
         }
 
-        /* ??????? */
         new_kvs[entry->number_entries] = malloc(sizeof(celery_heap_entry_kv_t));
         new_kvs[entry->number_entries]->key = key;
         new_kvs[entry->number_entries]->type = type;
@@ -89,42 +88,11 @@ void heap_put(celery_heap_t* heap, int adr, celery_heap_entry_type_t type, char*
 
 }
 
-void heap_set_kind(celery_heap_t* heap, int adr, char* kind) {
-  celery_heap_entry_t* entry = heap->entries[adr];
-  if(!entry) {
-      debug_print("NO ENTRY AT ADDRESS %d\r\n", adr);
-      exit(1);
-  }
-  int len = strlen(kind);
-  entry->kind = malloc(len);
-  memcpy(entry->kind, kind, len);
-}
-
-void inspect_heap(celery_heap_t* heap) {
-    for(int i = 0; i<heap->heap_size; i++) {
-        celery_heap_entry_t* entry = heap->entries[i];
-        debug_print("ENTRY[%d] with %d number of entries.\r\n", i, entry->number_entries);
-        for(int j = 0; j<entry->number_entries; j++) {
-            celery_heap_entry_kv_t* kv = entry->kvs[j];
-            char* key = kv->key;
-            void* value = kv->value;
-
-            switch(kv->type) {
-            case CSH_STRING:
-                debug_print("\t'%s' => '%s'\r\n", key, (char*)value);
-                break;
-            case CSH_BOOL:
-            case CSH_NUMBER:
-            case CSH_ADDRESS: {
-                int actual_value = *(int*)value;
-                debug_print("\t'%s' => %d\r\n", key, actual_value);
-                break;
-            }
-            default:
-                debug_print("\t'%s' => %p (unknown type)\r\n", key, value);
-                break;
-            }
-        }
-        debug_print("\r\n");
+void heap_set_kind(celery_heap_t* heap, heap_addr_t adr, heap_key_t kind) {
+    celery_heap_entry_t* entry = heap->entries[adr];
+    if(!entry) {
+        debug_print("NO ENTRY AT ADDRESS %d\r\n", adr);
+        exit(1);
     }
+    entry->kind = kind;
 }

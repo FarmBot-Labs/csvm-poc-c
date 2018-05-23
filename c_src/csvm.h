@@ -12,8 +12,8 @@
 typedef uint32_t csvm_register_t;
 
 typedef struct Csvm {
-  csvm_register_t registers[NUMBER_REGISTERS];
-  celery_heap_t* heap;
+    csvm_register_t registers[NUMBER_REGISTERS];
+    celery_heap_t* heap;
 } csvm_t;
 
 csvm_t* csvm_init();
