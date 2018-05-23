@@ -45,17 +45,36 @@ void slicer_iterate_over_body(celery_heap_t* heap, celery_script_t** body, size_
 }
 
 void slicer_iterate_over_args(celery_heap_t* heap, celery_arg_t** args, size_t args_size, heap_addr_t parent_addr) {
-    // int i;
-    // for(i = 0; i<args_size; i++) {
-    //     if(args[i]->type == CS_CELERYSCRIPT) {
-    //         int buf_size = strlen(HEAP_LINK) + 1 + strlen(args[i]->kind) + 1;
-    //         char* buf = malloc(buf_size);
-    //         snprintf(buf, buf_size, "%s_%s", HEAP_LINK, args[i]->kind);
-    //         int addr = slicer_allocate(heap, args[i]->value, parent_addr);
-    //         heap_put(heap, parent_addr, CSH_ADDRESS, buf, &addr);
-    //     } else {
-    //         celery_heap_entry_value_t value;
-    //         heap_put(heap, parent_addr, args[i]->type, args[i]->kind, args[i]->value);
-    //     }
-    // }
+    int i;
+    for(i = 0; i<args_size; i++) {
+      switch(args[i]->type) {
+        case CS_CELERYSCRIPT: {
+          celery_heap_entry_value_t addr_value;
+          addr_value.number_value = slicer_allocate(heap, args[i]->value.celery_value, parent_addr);
+          heap_put(heap, parent_addr, CSH_ADDRESS, args[i]->kind, addr_value);
+          break;
+        }
+        case CS_STRING: {
+          // This one might be wrong.
+          celery_heap_entry_value_t val;
+          val.str_value = args[i]->value.str_value;
+          heap_put(heap, parent_addr, args[i]->type, args[i]->kind, val);
+          break;
+        }
+        case CS_BOOL: {
+          celery_heap_entry_value_t val;
+          val.bool_value = args[i]->value.bool_value;
+          heap_put(heap, parent_addr, args[i]->type, args[i]->kind, val);
+          break;
+        }
+        case CS_NUMBER: {
+          celery_heap_entry_value_t val;
+          val.number_value = args[i]->value.number_value;
+          heap_put(heap, parent_addr, args[i]->type, args[i]->kind, val);
+          break;
+        }
+        default:
+          break;
+      }
+    }
 }

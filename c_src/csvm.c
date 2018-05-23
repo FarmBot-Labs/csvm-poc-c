@@ -21,8 +21,6 @@
 csvm_t* GlobalVM = NULL;
 
 csvm_t* csvm_init() {
-    // debug_print("WHOOOO: %d\r\n", node_name_from_string("nothing"));
-    debug_print("HEY: %s\r\n", string_from_node_name(NOTHING));
     csvm_t* csvm = malloc(sizeof(csvm_t));
     for(int i = 0; i<NUMBER_REGISTERS; i++) {
         csvm->registers[i] = 0;
@@ -40,8 +38,56 @@ void csvm_tick(csvm_t* vm) {
     csvm_register_t pc = vm->registers[REGISTER_PC];
     debug_print("Fetch heap entry at pc: %d\r\n", pc);
     if(!(pc >= vm->heap->heap_size)) {
+        debug_print_q("\r\n\r\n");
         celery_heap_entry_t* entry = vm->heap->entries[pc];
-        debug_print("Executing: [%s]\r\n", string_from_node_name(entry->kind));
+        debug_print_q("Executing: [%s](%ld) {", string_from_node_name(entry->kind), entry->number_entries);
+        for(int i = 0; i<entry->number_entries; i++) {
+          celery_heap_entry_kv_t* kv = entry->kvs[i];
+          char key_str[20];
+          char val_str[20];
+          strcpy(&key_str[0], "X");
+          switch(kv->type) {
+            case CSH_BOOL:
+              strcpy(&key_str[0], string_from_arg_name(kv->key));
+              strcpy(&val_str[0], kv->value.bool_value ? "true" : "false");
+              break;
+            case CSH_NUMBER:
+              strcpy(&key_str[0], string_from_arg_name(kv->key));
+              sprintf(&val_str[0], "%f", kv->value.number_value);
+              break;
+            case CSH_ADDRESS:
+              switch(kv->key) {
+                case HEAP_BODY:
+                  strcpy(&key_str[0], "HEAP_BODY");
+                  break;
+                case HEAP_NEXT:
+                  strcpy(&key_str[0], "HEAP_NEXT");
+                  break;
+                case HEAP_LINK:
+                  strcpy(&key_str[0], "HEAP_LINK");
+                  break;
+                case HEAP_PARENT:
+                  strcpy(&key_str[0], "HEAP_PARENT");
+                  break;
+                case HEAP_KIND:
+                  strcpy(&key_str[0], "HEAP_KIND");
+                  break;
+                default:
+                  strcpy(&key_str[0], string_from_arg_name(kv->key));
+                  break;
+              }
+              sprintf(&val_str[0], "0x%d", (int)kv->value.number_value);
+              break;
+            case CSH_STRING:
+              strcpy(&key_str[0], string_from_arg_name(kv->key));
+              sprintf(&val_str[0], "%s", kv->value.str_value);
+              break;
+            default:
+              strcpy(&val_str[0], "unknown type");
+          }
+          debug_print_q("\r\n\t'%s': '%s', ", key_str, val_str);
+        }
+        debug_print_q("\r\n}\r\n\r\n");
     }
 }
 

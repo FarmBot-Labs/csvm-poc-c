@@ -6,7 +6,7 @@ defmodule Csvm.MixProject do
       app: :csvm,
       version: "0.1.0",
       elixir: "~> 1.6",
-      # compilers: [:elixir_make] ++ Mix.compilers(),
+      compilers: [:elixir_make] ++ Mix.compilers(),
       make_clean: ["clean"],
       make_env: make_env(),
       # package: package(),

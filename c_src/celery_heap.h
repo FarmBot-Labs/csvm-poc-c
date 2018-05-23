@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 
-
 typedef size_t heap_key_t;
 typedef size_t heap_addr_t;
 
