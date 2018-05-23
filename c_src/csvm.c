@@ -17,6 +17,7 @@
 #include "celery_script.h"
 #include "celery_slicer.h"
 #include "corpus.h"
+#include "celery_heap_encoder.h"
 
 csvm_t* GlobalVM = NULL;
 
@@ -139,6 +140,7 @@ celery_ipc_response_t* process_request(celery_ipc_request_t* request) {
     if(strcmp(request->namespace, "LOAD") == 0) {
         celery_script_t* celery = buffer_to_celery_script(request->payload);
         GlobalVM->heap = slice(celery, GlobalVM->heap);
+        celery_heap_encode_json(GlobalVM->heap);
     }
     return resp;
 }
