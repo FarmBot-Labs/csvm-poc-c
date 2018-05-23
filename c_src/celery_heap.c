@@ -57,12 +57,12 @@ void heap_put(celery_heap_t* heap, heap_addr_t adr, celery_heap_entry_type_t typ
     }
 
     if(found) {
-        debug_print("updating key %s\r\n", key);
+        debug_print("updating key %s\r\n", string_from_node_name(key));
         entry->kvs[i-1]->key = key;
         entry->kvs[i-1]->type = type;
         entry->kvs[i-1]->value = value;
     } else if(entry->number_entries == 0) {
-        debug_print("adding first key %ls\r\n", key);
+        debug_print("adding first key %s %ld\r\n", string_from_node_name(key), key);
         entry->kvs = malloc(1 * sizeof(celery_heap_entry_kv_t));
         entry->kvs[0] = malloc(sizeof(celery_heap_entry_kv_t));
         entry->kvs[0]->key = key;
@@ -70,7 +70,7 @@ void heap_put(celery_heap_t* heap, heap_addr_t adr, celery_heap_entry_type_t typ
         entry->kvs[0]->value = value;
         entry->number_entries = 1;
     } else {
-        debug_print("adding key %s (currently %d entries)\r\n", key, entry->number_entries);
+        debug_print("adding key %s (currently %ld entries)\r\n", string_from_node_name(key), entry->number_entries);
 
         celery_heap_entry_kv_t** new_kvs = realloc(entry->kvs, (entry->number_entries + 1) * sizeof(celery_heap_entry_kv_t));
         if(!new_kvs) {
@@ -91,7 +91,7 @@ void heap_put(celery_heap_t* heap, heap_addr_t adr, celery_heap_entry_type_t typ
 void heap_set_kind(celery_heap_t* heap, heap_addr_t adr, heap_key_t kind) {
     celery_heap_entry_t* entry = heap->entries[adr];
     if(!entry) {
-        debug_print("NO ENTRY AT ADDRESS %d\r\n", adr);
+        debug_print("NO ENTRY AT ADDRESS %ld\r\n", adr);
         exit(1);
     }
     entry->kind = kind;

@@ -8,11 +8,11 @@ typedef size_t heap_key_t;
 typedef size_t heap_addr_t;
 
 typedef enum CeleryHeapConstants {
-  HEAP_BODY,
-  HEAP_NEXT,
-  HEAP_LINK,
-  HEAP_PARENT,
-  HEAP_KIND,
+    HEAP_BODY,
+    HEAP_NEXT,
+    HEAP_LINK,
+    HEAP_PARENT,
+    HEAP_KIND,
 } celery_heap_constant_t;
 
 typedef enum CeleryHeapEntryType {
@@ -23,9 +23,9 @@ typedef enum CeleryHeapEntryType {
 } celery_heap_entry_type_t;
 
 typedef union CeleryHeapEntryValue {
-  double number_value;
-  bool bool_value;
-  char* str_value;
+    double number_value;
+    bool bool_value;
+    char* str_value;
 } celery_heap_entry_value_t;
 
 typedef struct CeleryHeapEntryKV {

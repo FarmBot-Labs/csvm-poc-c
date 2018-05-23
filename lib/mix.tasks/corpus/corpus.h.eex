@@ -1,0 +1,40 @@
+#ifndef CORPUS_H
+#define CORPUS_H
+
+#define NUMBER_NODE_NAMES (<%= Enum.count(node_names) %>)
+#define NUMBER_ARG_NAMES (<%= Enum.count(arg_names) %>)
+#define BADKEY -1
+
+/** Symbol of key => value */
+typedef struct {
+    char *key;
+    int val;
+} celery_kv_sym_t;
+
+/* Begin Celery Node definition */
+typedef enum CeleryNodeKind {
+  <%=
+    Enum.map(node_names, fn(%{upcase_name: name, index: index}) ->
+      "#{name} = #{index}"
+    end)
+    |> Enum.join(",\r\n\t")
+  %>
+} celery_node_kind_name_t;
+
+/* Begin Celery Arg definition */
+typedef enum CeleryArgKind {
+  <%=
+    Enum.map(arg_names, fn(%{upcase_name: name, index: index}) ->
+      "#{name} = #{index}"
+    end)
+    |> Enum.join(",\r\n\t")
+  %>
+} celery_arg_kind_name_t;
+
+celery_node_kind_name_t node_name_from_string(char *key);
+char* string_from_node_name(celery_node_kind_name_t name);
+
+celery_arg_kind_name_t arg_name_from_string(char *key);
+char* string_from_arg_name(celery_arg_kind_name_t name);
+
+#endif

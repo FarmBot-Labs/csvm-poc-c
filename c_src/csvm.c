@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 
 // For sighangup handling.
 #include <signal.h>
@@ -22,6 +21,8 @@
 csvm_t* GlobalVM = NULL;
 
 csvm_t* csvm_init() {
+    // debug_print("WHOOOO: %d\r\n", node_name_from_string("nothing"));
+    debug_print("HEY: %s\r\n", string_from_node_name(NOTHING));
     csvm_t* csvm = malloc(sizeof(csvm_t));
     for(int i = 0; i<NUMBER_REGISTERS; i++) {
         csvm->registers[i] = 0;
@@ -40,7 +41,7 @@ void csvm_tick(csvm_t* vm) {
     debug_print("Fetch heap entry at pc: %d\r\n", pc);
     if(!(pc >= vm->heap->heap_size)) {
         celery_heap_entry_t* entry = vm->heap->entries[pc];
-        debug_print("Executing: [%s]\r\n", entry->kind);
+        debug_print("Executing: [%s]\r\n", string_from_node_name(entry->kind));
     }
 }
 
@@ -107,7 +108,12 @@ void write_response(celery_ipc_response_t* response) {
     free(packet);
 }
 
-void *fde(void *arg) {
+int main(int argc, char const *argv[]) {
+    // Handle sighangup when the port closes
+    prctl(PR_SET_PDEATHSIG, SIGHUP);
+    init_termios();
+    GlobalVM = csvm_init();
+
     celery_ipc_request_t* req;
     celery_ipc_response_t* resp;
     for(;;) {
@@ -123,17 +129,6 @@ void *fde(void *arg) {
         write_response(resp);
         free(resp);
     }
-}
-
-int main(int argc, char const *argv[]) {
-    // Handle sighangup when the port closes
-    prctl(PR_SET_PDEATHSIG, SIGHUP);
-    init_termios();
-    GlobalVM = csvm_init();
-
-    pthread_t thread_id;
-    pthread_create(&thread_id, NULL, fde, NULL);
-    pthread_join(thread_id, NULL);
 
     return 300;
 }

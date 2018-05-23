@@ -12,7 +12,7 @@ SRC=$(wildcard c_src/*.c) $(CJSON_SRC)
 OBJ=$(SRC:.c=.o)
 
 
-LDFLAGS ?= -pthread
+LDFLAGS ?= 
 CFLAGS ?= -Wall -std=c17
 
 ifdef DEBUG

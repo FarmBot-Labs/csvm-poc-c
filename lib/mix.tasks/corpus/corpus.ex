@@ -11,8 +11,15 @@ defmodule Mix.Tasks.Corpus do
       File.read!(file)
       |> Poison.decode!()
 
-    node_names = data["nodes"] |> Enum.map(&Map.get(&1, "name"))
-    arg_names = data["args"] |> Enum.map(&Map.get(&1, "name"))
+    node_names =
+      data["nodes"]
+      |> Enum.map(&Map.get(&1, "name"))
+      |> Enum.map(&Macro.underscore(Macro.camelize(&1)))
+
+    arg_names =
+      data["args"]
+      |> Enum.map(&Map.get(&1, "name"))
+      |> Enum.map(&Macro.underscore(Macro.camelize(&1)))
 
     node_names =
       Enum.reduce(0..(Enum.count(node_names) - 1), [], fn index, acc ->
@@ -29,10 +36,10 @@ defmodule Mix.Tasks.Corpus do
       |> Enum.reverse()
 
     opts = [node_names: node_names, arg_names: arg_names, tag: data["tag"]]
-    evald = EEx.eval_file(Path.join(@templates_dir, "template.c.eex"), opts)
+    evald_c = EEx.eval_file(Path.join(@templates_dir, "corpus.c.eex"), opts)
+    evald_h = EEx.eval_file(Path.join(@templates_dir, "corpus.h.eex"), opts)
 
-    File.write!("/tmp/corpus.h", evald)
-    {_, 0} = System.cmd("gcc", ["-o-", "/tmp/corpus.h"])
-    File.cp!("/tmp/corpus.h", "c_src/corpus.h")
+    File.write!("c_src/corpus.c", evald_c)
+    File.write!("c_src/corpus.h", evald_h)
   end
 end

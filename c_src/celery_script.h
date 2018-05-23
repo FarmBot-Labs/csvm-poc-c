@@ -13,10 +13,10 @@ typedef enum CeleryArgType {
 } celery_arg_type_t;
 
 typedef union CeleryArgValue {
-  char* str_value;
-  bool bool_value;
-  double number_value;
-  struct CeleryScript* celery_value;
+    char* str_value;
+    bool bool_value;
+    double number_value;
+    struct CeleryScript* celery_value;
 } celery_arg_value_t;
 
 typedef struct CeleryArg {

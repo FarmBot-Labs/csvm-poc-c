@@ -43,10 +43,12 @@ defmodule Csvm do
   def open_port do
     executable = :code.priv_dir(:csvm) ++ '/csvm'
 
-    Port.open({:spawn_executable, executable}, [
+    port = Port.open({:spawn_executable, executable}, [
       {:args, []},
       :binary,
       :exit_status
     ])
+    Port.info(port, :os_pid) |> IO.inspect(label: "PORT INFO")
+    port
   end
 end
