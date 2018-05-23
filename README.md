@@ -19,3 +19,12 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/csvm](https://hexdocs.pm/csvm).
 
+
+## Installation/Usage
+
+```bash
+git clone git@github.com/farmbot-labs/csvm-poc-c
+cd csvm-poc-c
+mix deps.get
+iex -S mix
+```

@@ -61,14 +61,8 @@ void csvm_tick(csvm_t* vm) {
                 case HEAP_NEXT:
                   strcpy(&key_str[0], "HEAP_NEXT");
                   break;
-                case HEAP_LINK:
-                  strcpy(&key_str[0], "HEAP_LINK");
-                  break;
                 case HEAP_PARENT:
                   strcpy(&key_str[0], "HEAP_PARENT");
-                  break;
-                case HEAP_KIND:
-                  strcpy(&key_str[0], "HEAP_KIND");
                   break;
                 default:
                   strcpy(&key_str[0], string_from_arg_name(kv->key));

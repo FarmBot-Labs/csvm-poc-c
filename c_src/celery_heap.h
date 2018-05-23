@@ -9,9 +9,7 @@ typedef size_t heap_addr_t;
 typedef enum CeleryHeapConstants {
     HEAP_BODY,
     HEAP_NEXT,
-    HEAP_LINK,
     HEAP_PARENT,
-    HEAP_KIND,
 } celery_heap_constant_t;
 
 typedef enum CeleryHeapEntryType {

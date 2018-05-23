@@ -23,6 +23,7 @@ void celery_heap_encode_json(celery_heap_t* heap) {
 
     cJSON* heap_entry_json = cJSON_CreateObject();
     cJSON* kind_json = cJSON_CreateString(string_from_node_name(entry->kind));
+    cJSON* kvs_json = cJSON_CreateArray();
 
     for(j=0; j<entry->number_entries;j++) {
       celery_heap_entry_kv_t* kv = entry->kvs[j];
@@ -42,13 +43,13 @@ void celery_heap_encode_json(celery_heap_t* heap) {
         case CSH_BOOL: {
           type_json = cJSON_CreateString("BOOL");
           value_json = cJSON_CreateBool(kv->value.bool_value);
-          key_json = cJSON_CreateString(string_from_node_name(kv->key));
+          key_json = cJSON_CreateString(string_from_arg_name(kv->key));
           break;
         }
         case CSH_NUMBER: {
           type_json = cJSON_CreateString("NUMBER");
           value_json = cJSON_CreateNumber(kv->value.number_value);
-          key_json = cJSON_CreateString(string_from_node_name(kv->key));
+          key_json = cJSON_CreateString(string_from_arg_name(kv->key));
           break;
         }
         case CSH_ADDRESS: {
@@ -63,16 +64,8 @@ void celery_heap_encode_json(celery_heap_t* heap) {
               key_json = cJSON_CreateString("HEAP_NEXT");
               break;
             }
-            case HEAP_LINK: {
-              key_json = cJSON_CreateString("HEAP_LINK");
-              break;
-            }
             case HEAP_PARENT: {
               key_json = cJSON_CreateString("HEAP_PARENT");
-              break;
-            }
-            case HEAP_KIND: {
-              key_json = cJSON_CreateString("HEAP_KIND");
               break;
             }
             default: {
@@ -84,7 +77,7 @@ void celery_heap_encode_json(celery_heap_t* heap) {
         }
       }
 
-      debug_print("Adding key %s to kv_json\r\n", key_json->valuestring);
+      // debug_print("Adding key %s to kv_json\r\n", key_json->valuestring || "whoops");
       cJSON_AddItemToObject(kv_json, "key", key_json);
 
       debug_print("Adding value %s to kv_json\r\n", value_json->valuestring);
@@ -94,13 +87,18 @@ void celery_heap_encode_json(celery_heap_t* heap) {
       cJSON_AddItemToObject(kv_json, "type", type_json);
 
       debug_print("Adding kv to heap_entries\r\n");
-      cJSON_AddItemToArray(heap_entries_json, kv_json);
+      cJSON_AddItemToArray(kvs_json, kv_json);
     }
 
     debug_print("Adding kind %s to heap_entry\r\n", kind_json->valuestring);
     cJSON_AddItemToObject(heap_entry_json, "kind", kind_json);
+    cJSON_AddItemToObject(heap_entry_json, "kvs", kvs_json);
+    cJSON_AddItemToArray(heap_entries_json, heap_entry_json);
   }
 
   cJSON_AddItemToObject(heap_json, "entries", heap_entries_json);
-  fprintf(stderr, cJSON_Print(heap_json));
+  FILE *f = fopen("out.json", "w");
+  fprintf(f, cJSON_Print(heap_json));
+  fflush(f);
+  fclose(f);
 }
