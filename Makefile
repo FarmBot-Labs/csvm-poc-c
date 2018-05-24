@@ -43,7 +43,7 @@ PORT := priv/csvm
 
 .PHONY: all lua_clean lua_fullclean
 
-all: priv $(LUA_LIB) priv/csvm priv/nif_test.so
+all: priv $(LUA_LIB) priv/csvm
 
 $(LUA_SRC_DIR):
 	wget $(LUA_DL_URL)
