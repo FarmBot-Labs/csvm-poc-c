@@ -24,11 +24,6 @@ LUA_LDFLAGS := -L$(LUA_LIBDIR) -llua
 
 LUA_LIB := $(LUA_LIBDIR)/liblua.so
 
-NIF_CFLAGS := -O2
-NIF_LDFLAGS := -fPIC -shared -pedantic
-
-CJSON_SRC=c_src/cJSON/cJSON.c
-
 SRC=$(wildcard c_src/*.c) $(CJSON_SRC)
 OBJ=$(SRC:.c=.o)
 

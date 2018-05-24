@@ -1,27 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // For sighangup handling.
 #include <signal.h>
 #include <sys/prctl.h>
 #include <linux/prctl.h>
 
+// Terminal settings
 #include <termios.h>
+
+// Thread
 #include <pthread.h>
-#include <semaphore.h>
 
 #include "celery_ipc.h"
 #include "util.h"
-
-/** DELETEME */
-#include <string.h>
-#include <poll.h>
-#include <errno.h>
-#include <unistd.h>
-#include "celery_script.h"
-#include "celery_slicer.h"
-#include "corpus.h"
-#include "celery_heap_encoder.h"
 
 /* Initialize new terminal i/o settings */
 void init_termios() {
@@ -32,32 +25,9 @@ void init_termios() {
     tcsetattr(0, TCSANOW, &settings); /* use these new terminal i/o settings now */
 }
 
-celery_ipc_request_t* get_request() {
-    char request_header_buffer[ipc_request_header_size()];
-    size_t total_bytes_read = 0;
-    char read;
-
-    while(total_bytes_read != ipc_request_header_size()) {
-        read = getchar();
-        request_header_buffer[total_bytes_read] = read;
-        total_bytes_read += 1;
-    }
-
-    celery_ipc_request_t* request = ipc_request_decode_header(&request_header_buffer[0]);
-    total_bytes_read = 0;
-
-    while(total_bytes_read != request->payload_size) {
-        request->payload[total_bytes_read] = getchar();
-        total_bytes_read += 1;
-    }
-
-    return request;
-}
-
 celery_ipc_t ipc_buffer[256];
 celery_ipc_t* ipc_buffer_ptr;
 pthread_mutex_t lock;
-sem_t sem;
 
 typedef enum ReaderState {
   RIPC_REQUEST_HEADER = 0,
@@ -74,15 +44,17 @@ void* populate_buffer(void* arg) {
       size_t number_of_bytes_read = 0;
       void* data = NULL;
 
-      char* buffer = malloc(sizeof(char) * number_of_bytes_needed);
+      char* buffer = malloc(sizeof(char) * number_of_bytes_needed);;
       char* buffer_start = buffer;
 
-      fflush(stdin);
+      FILE* reader_fp = stdin;
+      FILE* writer_fp = stdout;
+      fflush(reader_fp);
+      fflush(writer_fp);
 
       for(;;) {
         for(number_of_bytes_read = 0; number_of_bytes_read != number_of_bytes_needed;) {
-          buffer[0] = getchar();
-          buffer += sizeof(buffer[0]);
+          buffer += fread(&buffer[0], sizeof(char), 1, reader_fp);
           number_of_bytes_read += sizeof(buffer[0]);;
         }
 
@@ -91,9 +63,12 @@ void* populate_buffer(void* arg) {
           number_of_bytes_needed = tmp_request->payload_size;
           data = tmp_request;
           reader = RIPC_REQUEST_PAYLOAD;
+          buffer = buffer_start;
+          buffer = realloc(buffer, number_of_bytes_needed);
           debug_print("Got IPC request header.\r\n");
         } else if(reader == RIPC_REQUEST_PAYLOAD) {
           celery_ipc_request_t* tmp_request = data;
+          number_of_bytes_needed = ipc_request_header_size();
 
           celery_ipc_t ipc;
           celery_ipc_value_t ipc_value;
@@ -102,14 +77,22 @@ void* populate_buffer(void* arg) {
           ipc.type = CELERY_IPC_REQUEST;
           ipc.value = ipc_value;
 
-          pthread_mutex_lock(&lock);
-          memcpy(ipc_buffer_ptr, &ipc, sizeof(ipc));
-          memcpy(ipc_buffer_ptr->value.request->payload, buffer_start, tmp_request->payload_size);
-          pthread_mutex_unlock(&lock);
-          sem_post(&sem);
-
           reader = RIPC_REQUEST_HEADER;
+          buffer = buffer_start;
+          buffer = realloc(buffer, number_of_bytes_needed);
           debug_print("Got IPC request payload.\r\n");
+
+          celery_ipc_response_t* resp = malloc(sizeof(celery_ipc_response_t));
+          resp->channel_number = ipc.value.request->channel_number;
+          resp->return_code = 150;
+          resp->return_value = 166;
+
+          size_t size;
+          char* packet = ipc_response_encode(resp, &size);
+          fwrite(packet, sizeof(char), size, writer_fp);
+          fflush(stdout);
+          free(packet);
+
         } else if(reader == RIPC_RESPONSE) {
 
         } else {
@@ -117,22 +100,7 @@ void* populate_buffer(void* arg) {
           exit(-1);
         }
 
-        debug_print("read %ld bytes.\r\n", number_of_bytes_read);
-        memset(buffer_start, 0, sizeof(number_of_bytes_needed));
-        buffer = buffer_start;
       }
-}
-
-void* act_on_buffer(void* arg) {
-  for(;;) {
-    sem_wait(&sem);
-    debug_print("Gettinig data from buffer.\r\n");
-    // pthread_mutex_lock(&lock);
-    celery_ipc_t ipc;
-    memcpy(&ipc, ipc_buffer_ptr, sizeof(celery_ipc_t));
-    debug_print("%s\r\n", ipc.value.request);
-    // pthread_mutex_unlock(&lock);
-  }
 }
 
 int main(int argc, char const *argv[]) {
@@ -140,14 +108,10 @@ int main(int argc, char const *argv[]) {
     prctl(PR_SET_PDEATHSIG, SIGHUP);
     init_termios();
 
+    pthread_t thread;
     pthread_mutex_init(&lock, NULL);
-    sem_init(&sem, 0, 0);
-    pthread_t threads[2];
-
-    pthread_create(&threads[0], NULL, populate_buffer, NULL);
-    pthread_create(&threads[1], NULL, act_on_buffer, NULL);
+    pthread_create(&thread, NULL, populate_buffer, NULL);
     pthread_exit(NULL);
-    // pthread_join(threads[0], NULL);
     pthread_mutex_destroy(&lock);
     return -1;
 }
