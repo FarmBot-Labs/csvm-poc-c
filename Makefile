@@ -32,7 +32,7 @@ CJSON_SRC=c_src/cJSON/cJSON.c
 SRC=$(wildcard c_src/*.c) $(CJSON_SRC)
 OBJ=$(SRC:.c=.o)
 
-LDFLAGS ?=
+LDFLAGS ?= -pthread
 CFLAGS ?= -Wall -std=gnu99
 
 ifdef DEBUG
