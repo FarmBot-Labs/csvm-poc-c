@@ -27,7 +27,7 @@ LUA_LIB := $(LUA_LIBDIR)/liblua.so
 SRC=$(wildcard c_src/*.c) $(CJSON_SRC)
 OBJ=$(SRC:.c=.o)
 
-LDFLAGS ?= -pthread
+LDFLAGS ?= -pthread -lm -ldl
 CFLAGS ?= -Wall -std=gnu99
 
 ifdef DEBUG
