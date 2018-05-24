@@ -20,7 +20,7 @@ LUA_INCLUDE_DIR := $(LUA_BUILD_DIR)/include
 LUA_LIBDIR := $(LUA_BUILD_DIR)/lib
 
 LUA_CFLAGS := -I$(LUA_INCLUDE_DIR)
-LUA_LDFLAGS := -L$(LUA_LIBDIR) -llua
+LUA_LDFLAGS := -L$(LUA_LIBDIR)
 
 LUA_LIB := $(LUA_LIBDIR)/liblua.so
 
@@ -58,7 +58,7 @@ $(LUA_LIB): $(LUA_SRC_DIR) $(LUA_BUILD_DIR)
 	$(CC) -c $(CFLAGS) $(ERL_CFLAGS) $(LUA_CFLAGS) -o $@ $<
 
 $(PORT): $(OBJ)
-	$(CC) $^ $(LDFLAGS) $(ERL_LDFLAGS) $(LUA_LDFLAGS) -o $@
+	$(CC) $^ $(LUA_LIBDIR)/liblua.a $(LDFLAGS) $(ERL_LDFLAGS) $(LUA_LDFLAGS) -o $@
 
 priv/nif_test.so: c_src/nif_test/nif_test.c
 	$(CC) -o $@ $< $(LUA_CFLAGS) $(ERL_CFLAGS) $(CFLAGS) $(NIF_CFLAGS) $(LDFLAGS) $(ERL_LDFLAGS) $(LUA_LDFLAGS) $(NIF_LDFLAGS)
