@@ -28,3 +28,9 @@ cd csvm-poc-c
 mix deps.get
 iex -S mix
 ```
+
+# Explore Lua Bindings
+
+```
+lua -i lua_api_explorer.lua
+```
